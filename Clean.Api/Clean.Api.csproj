@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
+  </ItemGroup>
+
+  <!-- Clean.Api היא השכבה החיצונית, ולכן היא היחידה שמכירה את כולם -->
+  <ItemGroup>
+    <ProjectReference Include="..\Clean.Core\Clean.Core.csproj" />
+    <ProjectReference Include="..\Clean.Data\Clean.Data.csproj" />
+    <ProjectReference Include="..\Clean.Service\Clean.Service.csproj" />
+  </ItemGroup>
+
+</Project>

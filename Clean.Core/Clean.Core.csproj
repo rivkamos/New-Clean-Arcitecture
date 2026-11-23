@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Clean.Core הוא המרכז של הארכיטקטורה.
+    שימי לב: אין כאן אף PackageReference ואף ProjectReference.
+    זה לא במקרה - הליבה לא מכירה אף אחד, וכולם מכירים אותה.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+</Project>

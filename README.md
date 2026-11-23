@@ -1,62 +1,94 @@
-# Clean Architecture – .NET 8 Web API (דוגמה לסטודנטים)
+# NewCleanArchitecture
 
-פרויקט מינימלי שמדגים חלוקה לשכבות לפי Clean Architecture, עם שתי קריאות בלבד:
+גרסה מסודרת של [`rivkamos/TeachDotNet/Clean`](https://github.com/rivkamos/TeachDotNet/tree/main/Clean)
+על .NET 10.
 
-| פעולה | כתובת | תשובה |
+הפרויקט בנוי בכוונה **רק מהנושאים שנלמדו עד כה**. בלי DTO, בלי Entity Framework
+ובלי async — שלושת אלה ייכנסו בהמשך, והקוד מסודר כך שכל אחד מהם ייכנס בנקודה אחת
+ולא יפזר שינויים בכל הפרויקט.
+
+## המבנה
+
+ארבעת הפרויקטים יושבים ליד קובץ ה-solution, בלי תיקיית `src` ביניהם:
+
+```
+NewCleanArchitecture.slnx
+Clean.Core/
+Clean.Data/
+Clean.Service/
+Clean.Api/
+```
+
+## ארבעת הפרויקטים
+
+```
+Clean.Api  ──▶  Clean.Service  ──┐
+    │                            ├──▶  Clean.Core
+    └────────▶  Clean.Data   ────┘
+```
+
+| הפרויקט | התבנית ב-Visual Studio | מה יש בו |
 |---|---|---|
-| הוספת מוצר | `POST /api/products` | `201 Created` + המוצר החדש |
-| שליפת מוצר | `GET /api/products/{id}` | `200 OK` או `404 Not Found` |
+| `Clean.Core` | Class Library | `User`, ו-interfaces: `IUserRepository`, `IUserService` |
+| `Clean.Data` | Class Library | `UserRepository` — הנתונים ברשימה בזיכרון |
+| `Clean.Service` | Class Library | `UserService` — הלוגיקה |
+| `Clean.Api` | ASP.NET Core Web API | `UserController`, `Program.cs` |
 
-## מבנה השכבות
+הכלל היחיד שחשוב: **`Clean.Core` לא מכיר אף אחד.** קובץ הפרויקט שלו ריק מ-references,
+וכל השאר מצביעים אליו. אם נוסיף שם אי פעם reference לפרויקט אחר — החץ התהפך.
 
-```
-src/
-├── CleanArchitectureDemo.Domain           ← ישויות (Product). לא תלוי באף אחד
-├── CleanArchitectureDemo.Application      ← לוגיקה עסקית: Service, DTOs, ממשקים
-├── CleanArchitectureDemo.Infrastructure   ← מימוש טכני: Repository (בזיכרון)
-└── CleanArchitectureDemo.Api              ← Controller, Program.cs, Swagger
-```
-
-## כיוון התלויות (הכלל החשוב ביותר)
+## איפה ה-API
 
 ```
-Api  ──►  Application  ──►  Domain
- │             ▲
- └──►  Infrastructure
+Clean.Api/Controllers/UserController.cs
 ```
 
-- **Domain** לא מכיר אף שכבה.
-- **Application** מכיר רק את Domain, ומגדיר ממשק `IProductRepository`.
-- **Infrastructure** מממש את `IProductRepository` (תלוי ב-Application).
-- **Api** מחבר הכול יחד דרך Dependency Injection ב-`Program.cs`.
+בדיוק באותו מקום שבו הוא היה במקור. Controller רגיל שיורש מ-`ControllerBase`,
+עם `[HttpGet]` ו-`[HttpPost]`.
 
-> התלויות תמיד מצביעות **פנימה** – אל הלוגיקה העסקית.
-> לכן אפשר להחליף את ה-Repository מזיכרון ל-SQL Server בלי לגעת ב-Application או ב-Api.
-
-## זרימת בקשה
-
-```
-HTTP ► ProductsController ► IProductService (ProductService) ► IProductRepository (InMemoryProductRepository)
-```
+| פעולה | הנתיב | מה מחזיר |
+|---|---|---|
+| `GET` | `/User` | כל המשתמשים |
+| `GET` | `/User/1` | משתמש אחד, או `404` |
+| `POST` | `/User` | `201` והמשתמש שנוסף |
 
 ## הרצה
 
 ```bash
-dotnet run --project src/CleanArchitectureDemo.Api
+dotnet run --project Clean.Api
 ```
 
-ואז לפתוח: http://localhost:5000/swagger
+ואז בדפדפן: <http://localhost:5080/swagger>
 
-אפשר גם להשתמש בקובץ `src/CleanArchitectureDemo.Api/CleanArchitectureDemo.Api.http` (ב-Visual Studio / VS Code).
+## מה שונה מהמקור
 
-## דוגמה
+דברים שהוסרו כי הם לא עשו כלום:
 
-```bash
-curl -X POST http://localhost:5000/api/products -H "Content-Type: application/json" -d '{"name":"Laptop","price":3500}'
-```
+- **AutoMapper** — היה מותקן ב-`Clean.Data.csproj` ואף שורת קוד לא קראה לו.
+- **בלוק JWT מוער** ב-`Program.cs`, שהתייחס למשתנה `Configuration` שלא קיים.
+  יחד איתו הוסר גם `"Key": "your_secret_key_here"` שהיה כתוב בתוך `appsettings.json`.
+- **`MyService`** — קלאס ב-`Clean.Service` שקרא הגדרות ולא נקרא מאף מקום.
+- **`[HttpGet(Name = "GetWeatherForecast")]`** — שם שנשאר מתבנית הפרויקט.
+- **`app.UseAuthorization()`** — בלי authentication מוגדר הוא לא עושה כלום.
 
-```bash
-curl http://localhost:5000/api/products/1
-```
+דבר אחד תוקן:
 
-> הנתונים נשמרים בזיכרון בלבד ונמחקים כשהשרת עוצר – בכוונה, כדי שהדוגמה תהיה פשוטה.
+- ב-`UserRepository` המקורי ה-namespace היה `Clean.Core.Repositories`, למרות שהקובץ
+  יושב ב-`Clean.Data`. כאן ה-namespace תואם לפרויקט.
+
+## מה ייכנס בהמשך, ואיפה
+
+**Entity Framework** — ב-`Clean.Data/Repositories/UserRepository.cs` בלבד. הרשימה
+תוחלף ב-`DbContext`. אף שורה ב-`Clean.Core`, ב-`Clean.Service` או ב-`Clean.Api` לא
+תשתנה בגלל זה, וזה כל הרווח מהמבנה הזה.
+
+שימי לב לנקודה אחת שכדאי לשים לב אליה כשמגיעים לשם: במקור, ה-interface
+`IDataContext` שישב ב-`Clean.Core` חשף `DbSet<User>`, ולכן `Clean.Core` נאלץ
+להתקין את החבילה של EF. זה מה שמחזיר את התלות לליבה. ה-`DbContext` צריך להישאר
+ב-`Clean.Data`, ו-`Clean.Core` ימשיך להכיר רק את `IUserRepository`.
+
+**DTO** — ה-controller מחזיר כרגע את `User` עצמו, ולכן גם את `Password`. זו הנקודה
+שבה DTO נכנס: קלאס תשובה נפרד שאין בו שדה סיסמה.
+
+**async** — החתימות ב-`IUserRepository` ו-`IUserService` יהפכו ל-`Task<...>`
+עם `await`. הזמן הנכון לזה הוא יחד עם EF, כי שם יש באמת המתנה ל-I/O.

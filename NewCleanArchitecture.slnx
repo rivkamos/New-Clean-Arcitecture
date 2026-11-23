@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Clean.Core/Clean.Core.csproj" />
+  <Project Path="Clean.Data/Clean.Data.csproj" />
+  <Project Path="Clean.Service/Clean.Service.csproj" />
+  <Project Path="Clean.Api/Clean.Api.csproj" />
+</Solution>

@@ -1,0 +1,22 @@
+@baseUrl = http://localhost:5000
+
+### הוספת מוצר
+POST {{baseUrl}}/api/products
+Content-Type: application/json
+
+{
+  "name": "Laptop",
+  "price": 3500
+}
+
+### שליפת מוצר לפי מזהה
+GET {{baseUrl}}/api/products/1
+
+### בדיקת ולידציה - אמור להחזיר 400
+POST {{baseUrl}}/api/products
+Content-Type: application/json
+
+{
+  "name": "",
+  "price": -5
+}
